@@ -6,6 +6,7 @@
 
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
+int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
 
 int main()
 {
@@ -17,12 +18,11 @@ int main()
 
     MathUtility mathUtil;
 
-    sf::VertexArray triangle1(sf::Triangles, 3);
-    sf::VertexArray triangle2(sf::Triangles, 3);
-    sf::VertexArray triangle3(sf::Triangles, 3);
-
     std::vector<sf::VertexArray> triangles;
     initializeTriangles(triangles, 3);
+
+    int previouslyClickedTriangle = -1;
+    bool triangleSelected = false;
 
     // Main loop
     while (window.isOpen())
@@ -34,15 +34,26 @@ int main()
                 window.close();
             }
             
-            if (e.type == sf::Event::MouseButtonReleased) 
+            if (e.type == sf::Event::MouseButtonPressed) 
             {
-                std::array<sf::Vector2f, 3> arr{triangles[0][0].position, triangles[0][1].position, triangles[0][2].position};
+                sf::Vector2f mouseClick = (sf::Vector2f)sf::Mouse::getPosition(window);
 
-                if (mathUtil.pointInTriangleTest(arr, (sf::Vector2f)sf::Mouse::getPosition(window), 0.01)) 
+                if (!triangleSelected) 
                 {
-                    std::cout << "niggerlicious";
+                    int triangleCollision = checkCollisionWithTriangles(triangles, mouseClick, mathUtil);
+
+                    if (triangleCollision != -1)
+                    {
+                        if (previouslyClickedTriangle != -1)
+                        {
+                            triangles[previouslyClickedTriangle][0].color = sf::Color::White;
+                        }
+
+                        triangles[triangleCollision][0].color = sf::Color::Yellow;
+                        previouslyClickedTriangle = triangleCollision;
+                        triangleSelected = true;
+                    }
                 }
-                    
             }
 
         }
@@ -61,17 +72,24 @@ int main()
     return 0;
 }
 
-void checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2i mouseClickPoint) 
+int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil) 
 {
     for (int i = 0; i < triangles.size(); i++) 
     {
-        sf::Vector2f leftmostPoint = triangles[i][0].position;
-        sf::Vector2f rightmostPoint = triangles[i][1].position;
-        sf::Vector2f midPoint = triangles[i][2].position;
+        std::array<sf::Vector2f, 3> arr{triangles[i][0].position, triangles[i][1].position, triangles[i][2].position};
 
-
-
+        if (mathUtil.pointInTriangleTest(arr, mouseClickPoint, 0.01))
+        {
+            return i;
+        }
     }
+
+    return -1;
+}
+
+void moveSelectedTriangle(std::vector<sf::VertexArray>& vertexVector, int selectedTriangle)
+{
+    
 }
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles) 
@@ -89,7 +107,7 @@ void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberO
         triangle[2].position = sf::Vector2f(shiftPoint.x + (i * 200.f) + (triangleMainSideLength / 2), shiftPoint.y + 75.f);
 
         triangle[0].color = sf::Color::Blue;
-        triangle[1].color = sf::Color::Yellow;
+        triangle[1].color = sf::Color::Blue;
         triangle[2].color = sf::Color::Blue;
 
         vertexVector.push_back(triangle);
