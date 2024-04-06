@@ -2,6 +2,8 @@
 #include <iostream>
 #include "SFML/Graphics.hpp"
 #include <vector>
+#include "math_utility.hpp"
+
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 
@@ -12,6 +14,8 @@ int main()
         "Unimail");
 
     sf::Event e;
+
+    MathUtility mathUtil;
 
     sf::VertexArray triangle1(sf::Triangles, 3);
     sf::VertexArray triangle2(sf::Triangles, 3);
@@ -29,7 +33,18 @@ int main()
             {
                 window.close();
             }
-           
+            
+            if (e.type == sf::Event::MouseButtonReleased) 
+            {
+                std::array<sf::Vector2f, 3> arr{triangles[0][0].position, triangles[0][1].position, triangles[0][2].position};
+
+                if (mathUtil.pointInTriangleTest(arr, (sf::Vector2f)sf::Mouse::getPosition(window), 0.01)) 
+                {
+                    std::cout << "niggerlicious";
+                }
+                    
+            }
+
         }
 
         // Clear the window
