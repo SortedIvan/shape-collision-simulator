@@ -21,12 +21,19 @@ int main()
     std::vector<sf::VertexArray> triangles;
     initializeTriangles(triangles, 3);
 
-    int previouslyClickedTriangle = -1;
+    int previouslySelectedTriangle = -1;
     bool triangleSelected = false;
 
     // Main loop
     while (window.isOpen())
     {
+
+        if (triangleSelected) 
+        {
+            
+        }
+
+
         while (window.pollEvent(e))
         {
             if (e.type == sf::Event::Closed)
@@ -44,14 +51,27 @@ int main()
 
                     if (triangleCollision != -1)
                     {
-                        if (previouslyClickedTriangle != -1)
+                        if (previouslySelectedTriangle != -1)
                         {
-                            triangles[previouslyClickedTriangle][0].color = sf::Color::White;
+                            triangles[previouslySelectedTriangle][0].color = sf::Color::White;
                         }
 
                         triangles[triangleCollision][0].color = sf::Color::Yellow;
-                        previouslyClickedTriangle = triangleCollision;
+                        previouslySelectedTriangle = triangleCollision;
                         triangleSelected = true;
+                    }
+                }
+            }
+
+            if (e.type == sf::Event::MouseButtonReleased) 
+            {
+                if (triangleSelected) 
+                {
+                    if (previouslySelectedTriangle != -1) 
+                    {
+                        triangles[previouslySelectedTriangle][0].color = sf::Color::White;
+                        previouslySelectedTriangle = -1;
+                        triangleSelected = false;
                     }
                 }
             }
