@@ -7,6 +7,7 @@
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
+void moveSelectedTriangle(MathUtility& mathUtil, std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo);
 
 int main()
 {
@@ -27,13 +28,6 @@ int main()
     // Main loop
     while (window.isOpen())
     {
-
-        if (triangleSelected) 
-        {
-            
-        }
-
-
         while (window.pollEvent(e))
         {
             if (e.type == sf::Event::Closed)
@@ -41,6 +35,16 @@ int main()
                 window.close();
             }
             
+            if (e.type == sf::Event::MouseMoved) 
+            {
+                sf::Vector2f mouseMove = (sf::Vector2f)sf::Mouse::getPosition(window);
+
+                if (triangleSelected)
+                {
+                    moveSelectedTriangle(mathUtil, triangles, previouslySelectedTriangle, mouseMove);
+                }
+            }
+
             if (e.type == sf::Event::MouseButtonPressed) 
             {
                 sf::Vector2f mouseClick = (sf::Vector2f)sf::Mouse::getPosition(window);
@@ -107,9 +111,28 @@ int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vec
     return -1;
 }
 
-void moveSelectedTriangle(std::vector<sf::VertexArray>& vertexVector, int selectedTriangle)
+void moveSelectedTriangle(MathUtility& mathUtil,std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo)
 {
+    if (selectedTriangle == -1) 
+    {
+        return;
+    }
     
+    std::array<sf::Vector2f, 3> triangleCoordinates = 
+    { 
+        vertexVector[selectedTriangle][0].position,
+        vertexVector[selectedTriangle][1].position,
+        vertexVector[selectedTriangle][2].position 
+    };
+
+    sf::Vector2f triangleCentroid = mathUtil.caclulateTriangleCentroid(triangleCoordinates);
+        
+    sf::Vector2f displacementVector = mouseMovedTo - triangleCentroid;
+
+    // Now, add the displacement vector to all vertices of the triangle
+    vertexVector[selectedTriangle][0].position += displacementVector;
+    vertexVector[selectedTriangle][1].position += displacementVector;
+    vertexVector[selectedTriangle][2].position += displacementVector;
 }
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles) 

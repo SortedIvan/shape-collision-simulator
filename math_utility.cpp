@@ -48,3 +48,15 @@ float MathUtility::vectorLength(sf::Vector2f vector)
 	return std::sqrt((vector.x * vector.x) + (vector.y * vector.y));
 }
 
+sf::Vector2f MathUtility::caclulateTriangleCentroid(std::array<sf::Vector2f, 3>& points) 
+{
+	if (points.size() != 3) 
+	{
+		return sf::Vector2f(0, 0);
+	}
+
+	return sf::Vector2f(
+		(points[0].x + points[1].x + points[2].x) / 3,
+		(points[0].y + points[1].y + points[2].y) / 3		
+	);
+}
