@@ -11,4 +11,5 @@ class MathUtility
 		float vectorLength(sf::Vector2f vector);
 		float heronTriangleArea(float sideA, float sideB, float sideC);
 		sf::Vector2f caclulateTriangleCentroid(std::array<sf::Vector2f, 3>& points);
+		void rotateVector(sf::Vector2f& vectorToRotate, float angle);
 };

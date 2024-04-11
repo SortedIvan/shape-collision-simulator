@@ -60,3 +60,13 @@ sf::Vector2f MathUtility::caclulateTriangleCentroid(std::array<sf::Vector2f, 3>&
 		(points[0].y + points[1].y + points[2].y) / 3		
 	);
 }
+
+void MathUtility::rotateVector(sf::Vector2f& vectorToRotate, float angle)
+{
+	sf::Vector2f rotatedVector(
+		vectorToRotate.x * std::cos(angle) - vectorToRotate.y * std::sin(angle),
+		vectorToRotate.x * std::sin(angle) + vectorToRotate.y * std::cos(angle)
+	);
+
+	vectorToRotate = rotatedVector;
+}
