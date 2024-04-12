@@ -9,12 +9,14 @@ void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberO
 int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
 void moveSelectedTriangleWithCenter(MathUtility& mathUtil, std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo);
 void moveSelectedTriangleWithPoint(MathUtility& mathUtil, std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo, sf::Vector2f& pointHeld);
+void rotateSelectedTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
+void applyRotationToTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
 
 int main()
 {
     sf::RenderWindow window(
         sf::VideoMode(1000, 800),
-        "Unimail");
+        "Shapes");
 
     sf::Event e;
 
@@ -37,13 +39,22 @@ int main()
                 window.close();
             }
             
+            if (e.type == sf::Event::KeyPressed) 
+            {
+                switch (e.key.code) 
+                {
+                    case (sf::Keyboard::R):
+                        rotateSelectedTriangle(mathUtil, triangles, previouslySelectedTriangle, 0.06f, pointTriangleHeld);
+                        break;
+                }
+            }
+
             if (e.type == sf::Event::MouseMoved) 
             {
                 sf::Vector2f mouseMove = (sf::Vector2f)sf::Mouse::getPosition(window);
 
                 if (triangleSelected)
                 {
-                    //moveSelectedTriangleWithCenter(mathUtil, triangles, previouslySelectedTriangle, mouseMove);
                     moveSelectedTriangleWithPoint(mathUtil, triangles, previouslySelectedTriangle, mouseMove, pointTriangleHeld);
                 }
             }
@@ -90,11 +101,13 @@ int main()
         // Clear the window
         window.clear(sf::Color::Black);
 
+        // draw
         for (int i = 0; i < triangles.size(); i++) 
         {
             window.draw(triangles[i]);
         }
 
+        // display
         window.display();
     }
 
@@ -114,6 +127,32 @@ int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vec
     }
 
     return -1;
+}
+
+// Applies instant rotation to a triangle
+void rotateSelectedTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround) 
+{
+    if (selectedTriangle == -1) 
+    {
+        return;
+    }
+
+    math.rotateVector(triangles[selectedTriangle][0].position, degrees, pointToRotateAround);
+    math.rotateVector(triangles[selectedTriangle][1].position, degrees, pointToRotateAround);
+    math.rotateVector(triangles[selectedTriangle][2].position, degrees, pointToRotateAround);
+}
+
+// Applies a gradual rotation to a triangle
+void applyRotationToTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround)
+{
+    if (selectedTriangle == -1)
+    {
+        return;
+    }
+
+    triangles[selectedTriangle][0].position += math.getRotatedVector(triangles[selectedTriangle][0].position, degrees, pointToRotateAround);
+    triangles[selectedTriangle][1].position += math.getRotatedVector(triangles[selectedTriangle][1].position, degrees, pointToRotateAround);
+    triangles[selectedTriangle][2].position += math.getRotatedVector(triangles[selectedTriangle][2].position, degrees, pointToRotateAround);
 }
 
 void moveSelectedTriangleWithPoint(MathUtility& mathUtil, std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo, sf::Vector2f& pointHeld)

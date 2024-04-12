@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 
+# define M_PI  3.14159
 
 MathUtility::MathUtility()
 {
@@ -61,12 +62,28 @@ sf::Vector2f MathUtility::caclulateTriangleCentroid(std::array<sf::Vector2f, 3>&
 	);
 }
 
-void MathUtility::rotateVector(sf::Vector2f& vectorToRotate, float angle)
+void MathUtility::rotateVector(sf::Vector2f& vectorToRotate, float radians, sf::Vector2f pointToRotateAround)
 {
+	//float degrees = radians * (180 / M_PI);
+
+	sf::Vector2f offsetPoint(vectorToRotate - pointToRotateAround);
+	
 	sf::Vector2f rotatedVector(
-		vectorToRotate.x * std::cos(angle) - vectorToRotate.y * std::sin(angle),
-		vectorToRotate.x * std::sin(angle) + vectorToRotate.y * std::cos(angle)
+		offsetPoint.x * std::cos(radians) - offsetPoint.y * std::sin(radians),
+		offsetPoint.x * std::sin(radians) + offsetPoint.y * std::cos(radians)
 	);
 
-	vectorToRotate = rotatedVector;
+	vectorToRotate = rotatedVector + pointToRotateAround;
+}
+
+sf::Vector2f MathUtility::getRotatedVector(sf::Vector2f& vectorToRotate, float radians, sf::Vector2f pointToRotateAround) 
+{
+	float degrees = radians * (180 / M_PI);
+
+	sf::Vector2f offsetPoint(vectorToRotate - pointToRotateAround);
+
+	return pointToRotateAround + sf::Vector2f(
+		offsetPoint.x * std::cos(degrees) - offsetPoint.y * std::sin(degrees),
+		offsetPoint.x * std::sin(degrees) + offsetPoint.y * std::cos(degrees)
+	);
 }
