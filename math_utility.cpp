@@ -87,3 +87,57 @@ sf::Vector2f MathUtility::getRotatedVector(sf::Vector2f& vectorToRotate, float r
 		offsetPoint.x * std::sin(degrees) + offsetPoint.y * std::cos(degrees)
 	);
 }
+
+void MathUtility::normalize(sf::Vector2f& input) 
+{
+	float length = std::sqrt(input.x * input.x + input.y * input.y);
+
+	if (!length) 
+	{
+		return;
+	}
+	
+	input.x = input.x / length;
+	input.y = input.y / length;
+}
+
+std::array<sf::Vector2f, 3> MathUtility::getTriangleEdgeNormals(std::array<sf::Vector2f, 3> triangle) 
+{
+	std::array<sf::Vector2f, 3> edgeNormals;
+
+	for (int i = 0; i < 3; i++)
+	{
+
+		edgeNormals[i] = sf::Vector2f(-triangle[i].y, triangle[i].x);
+	}
+
+	return edgeNormals;
+}
+
+std::array<sf::Vector2f, 3> MathUtility::getTriangleEdgeNormalsNormalized(std::array<sf::Vector2f, 3> triangle)
+{
+	std::array<sf::Vector2f, 3> unitNormals;
+
+	for (int i = 0; i < 3; i++) 
+	{
+		float length = vectorLength(triangle[i]);
+
+		if (!length) {
+			break;
+		}
+
+		unitNormals[i] = sf::Vector2f(-triangle[i].y / length, triangle[i].x / length);
+	}
+
+	return unitNormals;
+}
+
+sf::Vector2f MathUtility::getVectorNormal(sf::Vector2f input) 
+{
+	return sf::Vector2f(-input.y, input.x);
+}
+
+float MathUtility::dot(sf::Vector2f a, sf::Vector2f b) 
+{
+	return (a.x * b.x + a.y * b.y);
+}

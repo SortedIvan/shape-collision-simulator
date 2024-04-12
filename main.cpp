@@ -3,7 +3,7 @@
 #include "SFML/Graphics.hpp"
 #include <vector>
 #include "math_utility.hpp"
-
+#include <utility>
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
@@ -11,6 +11,10 @@ void moveSelectedTriangleWithCenter(MathUtility& mathUtil, std::vector<sf::Verte
 void moveSelectedTriangleWithPoint(MathUtility& mathUtil, std::vector<sf::VertexArray>& vertexVector, int selectedTriangle, sf::Vector2f mouseMovedTo, sf::Vector2f& pointHeld);
 void rotateSelectedTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
 void applyRotationToTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
+void initializeRandomTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
+sf::Vector2f projectVertices(sf::Vector2f axis, sf::VertexArray verticesA, MathUtility& math);
+bool applyCollisionToSelectedTriangle(std::vector<sf::VertexArray>& triangles, int selectedTriangle, MathUtility& math);
+
 
 int main()
 {
@@ -25,15 +29,30 @@ int main()
     std::vector<sf::VertexArray> triangles;
     initializeTriangles(triangles, 3);
 
+    //initializeRandomTriangles(triangles, 100000);
+
     int previouslySelectedTriangle = -1;
     bool triangleSelected = false;
     sf::Vector2f pointTriangleHeld;
+    bool collisionTest = false;
+
 
     // Main loop
     while (window.isOpen())
     {
         while (window.pollEvent(e))
         {
+            if (triangleSelected)
+            {
+                collisionTest = applyCollisionToSelectedTriangle(triangles, previouslySelectedTriangle, mathUtil);
+            }
+            else 
+            {
+                collisionTest = false;
+            }
+
+
+
             if (e.type == sf::Event::Closed)
             {
                 window.close();
@@ -55,7 +74,10 @@ int main()
 
                 if (triangleSelected)
                 {
-                    moveSelectedTriangleWithPoint(mathUtil, triangles, previouslySelectedTriangle, mouseMove, pointTriangleHeld);
+                    if (!collisionTest) 
+                    {
+                        moveSelectedTriangleWithPoint(mathUtil, triangles, previouslySelectedTriangle, mouseMove, pointTriangleHeld);
+                    }
                 }
             }
 
@@ -223,4 +245,137 @@ void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberO
 
         vertexVector.push_back(triangle);
     }
+}
+
+void initializeRandomTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles)
+{
+    // Fixed size of 1000
+    srand(static_cast<unsigned int>(time(nullptr)));
+
+    sf::Vector2u screenSize = sf::Vector2u(1000, 800); 
+
+    for (int i = 0; i < numberOfTriangles; i++)
+    {
+        // Create a new triangle vertex array
+        sf::VertexArray triangle(sf::Triangles, 3);
+
+        float randX = static_cast<float>(rand() % (screenSize.x - 10)); // Generate a random x-coordinate
+        float randY = static_cast<float>(rand() % (screenSize.y - 10)); // Generate a random y-coordinate
+        triangle[0].position = sf::Vector2f(randX, randY);
+
+        // Calculate positions for the second and third vertices to ensure a side length of 10
+        float sideLength = 10.0f;
+        float offsetX = sideLength / 2.0f;
+        float offsetY = sideLength * sqrt(3.0f) / 2.0f;
+
+        triangle[1].position = sf::Vector2f(randX + sideLength, randY);
+        triangle[2].position = sf::Vector2f(randX + offsetX, randY + offsetY);
+
+        triangle[0].color = sf::Color::Blue;
+        triangle[1].color = sf::Color::Blue;
+        triangle[2].color = sf::Color::Blue;
+        
+        vertexVector.push_back(triangle);
+    }
+}
+
+// This function projects the vertices and gets the min and max from them
+// Since we are only looking for min and max, we don't need the full projection
+// we only get the dot product measure (the scalar) of the resulting vector
+sf::Vector2f projectVertices(sf::Vector2f axis, sf::VertexArray verticesA, MathUtility& math) 
+{
+
+    float max = std::numeric_limits<float>::lowest();
+    float min = std::numeric_limits<float>::max();
+
+    for (int i = 0; i < verticesA.getVertexCount(); i++) 
+    {
+        // project and find the min and max
+        float scalarProjection = math.dot(verticesA[i].position, axis);
+
+        if (scalarProjection > max) 
+        {
+            max = scalarProjection;
+            continue;
+        }
+
+        if (scalarProjection < min) 
+        {
+            min = scalarProjection;
+            continue;
+        }
+    }
+
+    return sf::Vector2f(min, max);
+}
+
+bool applyCollisionToSelectedTriangle(std::vector<sf::VertexArray>& triangles, int selectedTriangle, MathUtility& math) 
+{
+    bool colliding = true;
+
+    std::array<sf::Vector2f, 3> selectedTriangleEdges =
+    {
+        triangles[selectedTriangle][1].position - triangles[selectedTriangle][0].position,
+        triangles[selectedTriangle][2].position - triangles[selectedTriangle][1].position,
+        triangles[selectedTriangle][2].position - triangles[selectedTriangle][0].position
+    };
+
+    std::array<sf::Vector2f, 3> selectedTriangleNormals = math.getTriangleEdgeNormals(selectedTriangleEdges);
+
+    for (int i = 0; i < triangles.size(); i++) 
+    {
+        if (i == selectedTriangle) 
+        {
+            continue;
+        }
+
+        // triangles[0][0] == A, triangles[0][1] == B, triangles[0][2] == C 
+        std::array<sf::Vector2f, 3> triangleEdgesToCheck =
+        {
+            triangles[i][1].position - triangles[i][0].position,
+            triangles[i][2].position - triangles[i][1].position,
+            triangles[i][2].position - triangles[i][0].position
+        };
+
+
+        std::array<sf::Vector2f, 3> edgeNormalsToCheck = math.getTriangleEdgeNormals(triangleEdgesToCheck);
+
+        // start looping all normals and checking all potential overlaps
+        for (int k = 0; k < edgeNormalsToCheck.size(); k++) 
+        {
+            sf::Vector2f triangleMinMax_A = projectVertices(edgeNormalsToCheck[k], triangles[selectedTriangle], math);
+            sf::Vector2f triangleMinMax_B = projectVertices(edgeNormalsToCheck[k], triangles[i], math);
+
+            // since we are looking for a seperating axis, we look whether there is a minimum that is greater than a maximum
+
+            if (triangleMinMax_A.y <= triangleMinMax_B.x
+                || triangleMinMax_B.y <= triangleMinMax_A.x) 
+            {
+                // seperating axis found
+
+                colliding = false; 
+                return colliding;
+            }
+        }
+
+        for (int k = 0; k < selectedTriangleNormals.size(); k++)
+        {
+            sf::Vector2f triangleMinMax_A = projectVertices(selectedTriangleNormals[k], triangles[selectedTriangle], math);
+            sf::Vector2f triangleMinMax_B = projectVertices(selectedTriangleNormals[k], triangles[i], math);
+
+            // since we are looking for a seperating axis, we look whether there is a minimum that is greater than a maximum
+
+            if (triangleMinMax_A.y <= triangleMinMax_B.x
+                || triangleMinMax_B.y <= triangleMinMax_A.x)
+            {
+                // seperating axis found
+
+                colliding = false;
+                return colliding;
+            }
+        }
+
+    }
+
+    return colliding;
 }
