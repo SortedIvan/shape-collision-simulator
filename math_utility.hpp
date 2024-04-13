@@ -14,7 +14,6 @@ class MathUtility
 		void rotateVector(sf::Vector2f& vectorToRotate, float radians, sf::Vector2f pointToRotateAround);
 		sf::Vector2f getRotatedVector(sf::Vector2f& vectorToRotate, float angle, sf::Vector2f pointToRotateAround);
 		void normalize(sf::Vector2f& input);
-		std::array<sf::Vector2f, 3> getTriangleEdgeNormalsNormalized(std::array<sf::Vector2f, 3> triangle);
 		std::array<sf::Vector2f, 3> getTriangleEdgeNormals(std::array<sf::Vector2f, 3> triangle);
 		sf::Vector2f getVectorNormal(sf::Vector2f input);
 		float dot(sf::Vector2f a, sf::Vector2f b);
