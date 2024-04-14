@@ -10,6 +10,7 @@ class GameObject
 
 	public:
 		GameObject(sf::VertexArray _shape);
-		sf::VertexArray getShape();
+		sf::VertexArray& getShape();
 		void draw(sf::RenderWindow& window);	
+		void setShape(sf::VertexArray _shape);
 };
