@@ -139,10 +139,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="collider.cpp" />
+    <ClCompile Include="gameobject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math_utility.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="collider.hpp" />
+    <ClInclude Include="gameobject.hpp" />
     <ClInclude Include="math_utility.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -4,6 +4,7 @@
 #include <vector>
 #include "math_utility.hpp"
 #include <utility>
+#include "gameobject.hpp"
 
 void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 int checkCollisionWithTriangles(std::vector<sf::VertexArray>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
@@ -13,12 +14,10 @@ void rotateSelectedTriangle(MathUtility& math, std::vector<sf::VertexArray>& tri
 void applyRotationToTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
 void initializeRandomTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 sf::Vector2f projectVertices(sf::Vector2f axis, sf::VertexArray verticesA, MathUtility& math);
-bool applyCollisionToSelectedTriangle(std::vector<sf::VertexArray>& triangles, int selectedTriangle, MathUtility& math, sf::RenderWindow& window);
 void drawVector(sf::RenderWindow& window, sf::Vector2f start, sf::Vector2f vector, sf::Color color);
-
 bool checkTwoTrianglesColliding(sf::VertexArray triangleA, sf::VertexArray triangleB, MathUtility& math);
 bool checkSelectedTriangleCollision(std::vector<sf::VertexArray>& triangles, MathUtility& math, int& selectedTriangle);
-
+void initializeTriangleGameObjects(std::vector<GameObject>& triangles, int amount);
 
 
 int main()
@@ -32,9 +31,12 @@ int main()
     MathUtility mathUtil;
 
     std::vector<sf::VertexArray> triangles;
-    initializeTriangles(triangles, 3);
+    //initializeTriangles(triangles, 2);
+    //initializeRandomTriangles(triangles, 1000);
 
-    //initializeRandomTriangles(triangles, 100000);
+    std::vector<GameObject> triangleObjects;
+    initializeTriangleGameObjects(triangleObjects, 2);
+
 
     int previouslySelectedTriangle = -1;
     bool triangleSelected = false;
@@ -128,6 +130,11 @@ int main()
         for (int i = 0; i < triangles.size(); i++) 
         {
             window.draw(triangles[i]);
+        }
+
+        for (int i = 0; i < triangleObjects.size(); i++) 
+        {
+            triangleObjects[i].draw(window);
         }
 
         // display
@@ -388,13 +395,43 @@ bool checkTwoTrianglesColliding(sf::VertexArray triangleA, sf::VertexArray trian
 }
 
 // Function to draw a vector as a line segment
-void drawVector(sf::RenderWindow& window, sf::Vector2f start, sf::Vector2f vector, sf::Color color) 
+void drawVector(sf::RenderWindow& window, sf::Vector2f start, sf::Vector2f end, sf::Color color) 
 {
     sf::VertexArray line(sf::Lines, 2);
     line[0].position = start;
-    line[1].position = start + vector;
+    line[1].position = end;
     line[0].color = color;
     line[1].color = color;
 
     window.draw(line);
+}
+
+void initializeTriangleGameObjects(std::vector<GameObject>& triangles, int amount) 
+{
+    sf::Vector2f shiftPoint(200, 400);
+
+    float triangleMainSideLength = 100.f;
+
+    std::vector<sf::VertexArray> trianglesObjs;
+
+    for (int i = 0; i < amount; i++)
+    {
+        sf::VertexArray triangle(sf::Triangles, 3);
+
+        triangle[0].position = sf::Vector2f(shiftPoint.x + (i * 200.f), shiftPoint.y);
+        triangle[1].position = sf::Vector2f(shiftPoint.x + (i * 200.f) + triangleMainSideLength, shiftPoint.y);
+        triangle[2].position = sf::Vector2f(shiftPoint.x + (i * 200.f) + (triangleMainSideLength / 2), shiftPoint.y + 75.f);
+
+        triangle[0].color = sf::Color::Blue;
+        triangle[1].color = sf::Color::Blue;
+        triangle[2].color = sf::Color::Blue;
+
+        trianglesObjs.push_back(triangle);
+    }
+
+    for (int i = 0; i < trianglesObjs.size(); i++)
+    {
+        GameObject triangle(trianglesObjs[i]);
+        triangles.push_back(triangle);
+    }
 }

@@ -21,9 +21,21 @@
     <ClCompile Include="math_utility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gameobject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="math_utility.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameobject.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
