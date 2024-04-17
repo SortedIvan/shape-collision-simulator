@@ -6,18 +6,17 @@
 #include <utility>
 #include "gameobject.hpp"
 
-void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 int findClickedTriangle(std::vector<GameObject>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil);
 void moveSelectedTriangleWithCenter(MathUtility& mathUtil, std::vector<GameObject> objects, int selectedTriangle, sf::Vector2f mouseMovedTo);
 void moveSelectedTriangleWithPoint(MathUtility& mathUtil, std::vector<GameObject>& triangles, int selectedTriangle, sf::Vector2f mouseMovedTo, sf::Vector2f& pointHeld, bool& isColliding);
 void rotateSelectedTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
 void applyRotationToTriangle(MathUtility& math, std::vector<sf::VertexArray>& triangles, int selectedTriangle, float degrees, sf::Vector2f pointToRotateAround);
-void initializeRandomTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles);
 sf::Vector2f projectVertices(sf::Vector2f axis, sf::VertexArray verticesA, MathUtility& math);
 void drawVector(sf::RenderWindow& window, sf::Vector2f start, sf::Vector2f vector, sf::Color color);
 bool checkTwoTrianglesColliding(sf::VertexArray& triangleA, sf::VertexArray& triangleB, MathUtility& math);
-bool checkSelectedTriangleCollision(std::vector<GameObject>& triangles, MathUtility& math, int& selectedTriangle);
+bool checkSelectedTriangleCollision(std::vector<GameObject>& triangles, MathUtility& math, int& selectedTriangle, bool beforeMove);
 void initializeTriangleGameObjects(std::vector<GameObject>& triangles, int amount);
+void resizeCollider(std::vector<GameObject>& triangles, int& selectedTriangle, sf::Event& e, sf::RenderWindow& window);
 
 
 int main()
@@ -31,25 +30,24 @@ int main()
     MathUtility mathUtil;
 
     std::vector<sf::VertexArray> triangles;
-    //initializeTriangles(triangles, 2);
-    //initializeRandomTriangles(triangles, 1000);
 
     std::vector<GameObject> triangleObjects;
     initializeTriangleGameObjects(triangleObjects, 2);
 
 
+    int selectedTriangle = -1;
     int previouslySelectedTriangle = -1;
     bool triangleSelected = false;
     sf::Vector2f pointTriangleHeld;
     bool isColliding = false;
-
+    bool resizeColliderMode = false;
 
     // Main loop
     while (window.isOpen())
     {
         if (triangleSelected) 
         {
-            isColliding = checkSelectedTriangleCollision(triangleObjects, mathUtil, previouslySelectedTriangle);
+            isColliding = checkSelectedTriangleCollision(triangleObjects, mathUtil, selectedTriangle, false);
         }
         
         while (window.pollEvent(e))
@@ -62,13 +60,31 @@ int main()
             
             if (e.type == sf::Event::KeyPressed) 
             {
-                switch (e.key.code) 
+                if (e.key.code == sf::Keyboard::R)
+                {
+                    rotateSelectedTriangle(mathUtil, triangles, selectedTriangle, 0.06f, pointTriangleHeld);
+                }
+
+                if (previouslySelectedTriangle != -1) 
+                {
+                    resizeColliderMode = true;
+                    resizeCollider(triangleObjects, previouslySelectedTriangle, e, window);
+                }
+                
+            }
+
+            if (e.type == sf::Event::KeyReleased) 
+            {
+                switch (e.key.code)
                 {
                     case (sf::Keyboard::R):
-                        rotateSelectedTriangle(mathUtil, triangles, previouslySelectedTriangle, 0.06f, pointTriangleHeld);
+                        break;
+                    case (sf::Keyboard::LShift):
+                        resizeColliderMode = false;
                         break;
                 }
             }
+
 
             if (e.type == sf::Event::MouseMoved) 
             {
@@ -78,7 +94,7 @@ int main()
                 {
                     if (!isColliding)
                     {
-                        moveSelectedTriangleWithPoint(mathUtil, triangleObjects, previouslySelectedTriangle, mouseMove, pointTriangleHeld, isColliding);
+                        moveSelectedTriangleWithPoint(mathUtil, triangleObjects, selectedTriangle, mouseMove, pointTriangleHeld, isColliding);
                     }
                 }
             }
@@ -93,15 +109,15 @@ int main()
 
                     if (triangleCollision != -1)
                     {
-                        if (previouslySelectedTriangle != -1)
+                        if (selectedTriangle != -1)
                         {
-                            triangleObjects[previouslySelectedTriangle].getShape()[0].color = sf::Color::White;
+                            triangleObjects[selectedTriangle].getShape()[0].color = sf::Color::White;
                         }
 
                         pointTriangleHeld = mouseClick;
 
                         triangleObjects[triangleCollision].getShape()[0].color = sf::Color::Yellow;
-                        previouslySelectedTriangle = triangleCollision;
+                        selectedTriangle = triangleCollision;
                         triangleSelected = true;
                     }
                 }
@@ -111,10 +127,11 @@ int main()
             {
                 if (triangleSelected) 
                 {
-                    if (previouslySelectedTriangle != -1) 
+                    if (selectedTriangle != -1) 
                     {
-                        triangleObjects[previouslySelectedTriangle].getShape()[0].color = sf::Color::White;
-                        previouslySelectedTriangle = -1;
+                        triangleObjects[selectedTriangle].getShape()[0].color = sf::Color::White;
+                        previouslySelectedTriangle = selectedTriangle;
+                        selectedTriangle = -1;
                         triangleSelected = false;
                     }
                 }
@@ -139,9 +156,25 @@ int main()
     return 0;
 }
 
+void resizeCollider(std::vector<GameObject>& triangles, int& selectedTriangle, sf::Event& e, sf::RenderWindow& window)
+{
+    switch (e.key.code) 
+    {
+        case (sf::Keyboard::E):
+            triangles[selectedTriangle].changeSizeCollider(1.f, true, window);
+            break;
+
+        // Expand outwards
+        case (sf::Keyboard::Q):
+            triangles[selectedTriangle].changeSizeCollider(1.f, false, window);
+
+        //case (sf::Keyboard::Right):
+    }
+}
+
 int findClickedTriangle(std::vector<GameObject>& triangles, sf::Vector2f mouseClickPoint, MathUtility& mathUtil) 
 {
-    float ERROR_MARGIN = 0.01;
+    float ERROR_MARGIN = 0.01f;
 
     for (int i = 0; i < triangles.size(); i++) 
     {
@@ -202,24 +235,22 @@ void moveSelectedTriangleWithPoint(MathUtility& mathUtil, std::vector<GameObject
 
     std::vector<GameObject> trianglesAfterMove = triangles;
 
-    newTriangleCoordinates[0].position = triangles[selectedTriangle].getShape()[0].position + displacementVector;
-    newTriangleCoordinates[1].position = triangles[selectedTriangle].getShape()[1].position + displacementVector;
-    newTriangleCoordinates[2].position = triangles[selectedTriangle].getShape()[2].position + displacementVector;
+    newTriangleCoordinates[0].position = triangles[selectedTriangle].getCollider().getColliderBounds()[0].position + displacementVector;
+    newTriangleCoordinates[1].position = triangles[selectedTriangle].getCollider().getColliderBounds()[1].position + displacementVector;
+    newTriangleCoordinates[2].position = triangles[selectedTriangle].getCollider().getColliderBounds()[2].position + displacementVector;
 
     trianglesAfterMove[selectedTriangle].setShape(newTriangleCoordinates);
 
-    if (checkSelectedTriangleCollision(trianglesAfterMove, mathUtil, selectedTriangle))
+    if (checkSelectedTriangleCollision(trianglesAfterMove, mathUtil, selectedTriangle, true))
     {
         isColliding = true;
         return;
     }
 
-    pointHeld = pointHeld + displacementVector;
+    std::cout << "?";
 
-    //// Now, add the displacement vector to all vertices of the triangle
-    triangles[selectedTriangle].getShape()[0].position += displacementVector;
-    triangles[selectedTriangle].getShape()[1].position += displacementVector;
-    triangles[selectedTriangle].getShape()[2].position += displacementVector;
+    triangles[selectedTriangle].moveGameObject(displacementVector);
+    pointHeld = pointHeld + displacementVector;
 }
 
 void moveSelectedTriangleWithCenter(MathUtility& mathUtil, std::vector<GameObject> objects, int selectedTriangle, sf::Vector2f mouseMovedTo)
@@ -244,60 +275,6 @@ void moveSelectedTriangleWithCenter(MathUtility& mathUtil, std::vector<GameObjec
     objects[selectedTriangle].getShape()[0].position += displacementVector;
     objects[selectedTriangle].getShape()[1].position += displacementVector;
     objects[selectedTriangle].getShape()[2].position += displacementVector;
-}
-
-void initializeTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles) 
-{
-    sf::Vector2f shiftPoint(200, 400);
-
-    float triangleMainSideLength = 100.f;
-
-    for (int i = 0; i < numberOfTriangles; i++) 
-    {
-        sf::VertexArray triangle(sf::Triangles, 3);
-
-        triangle[0].position = sf::Vector2f(shiftPoint.x + (i * 200.f), shiftPoint.y);
-        triangle[1].position = sf::Vector2f(shiftPoint.x + (i * 200.f) + triangleMainSideLength, shiftPoint.y);
-        triangle[2].position = sf::Vector2f(shiftPoint.x + (i * 200.f) + (triangleMainSideLength / 2), shiftPoint.y + 75.f);
-
-        triangle[0].color = sf::Color::Blue;
-        triangle[1].color = sf::Color::Blue;
-        triangle[2].color = sf::Color::Blue;
-
-        vertexVector.push_back(triangle);
-    }
-}
-
-void initializeRandomTriangles(std::vector<sf::VertexArray>& vertexVector, int numberOfTriangles)
-{
-    // Fixed size of 1000
-    srand(static_cast<unsigned int>(time(nullptr)));
-
-    sf::Vector2u screenSize = sf::Vector2u(1000, 800); 
-
-    for (int i = 0; i < numberOfTriangles; i++)
-    {
-        // Create a new triangle vertex array
-        sf::VertexArray triangle(sf::Triangles, 3);
-
-        float randX = static_cast<float>(rand() % (screenSize.x - 10)); // Generate a random x-coordinate
-        float randY = static_cast<float>(rand() % (screenSize.y - 10)); // Generate a random y-coordinate
-        triangle[0].position = sf::Vector2f(randX, randY);
-
-        // Calculate positions for the second and third vertices to ensure a side length of 10
-        float sideLength = 10.0f;
-        float offsetX = sideLength / 2.0f;
-        float offsetY = sideLength * sqrt(3.0f) / 2.0f;
-
-        triangle[1].position = sf::Vector2f(randX + sideLength, randY);
-        triangle[2].position = sf::Vector2f(randX + offsetX, randY + offsetY);
-
-        triangle[0].color = sf::Color::Blue;
-        triangle[1].color = sf::Color::Blue;
-        triangle[2].color = sf::Color::Blue;
-        
-        vertexVector.push_back(triangle);
-    }
 }
 
 // This function projects the vertices and gets the min and max from them
@@ -327,8 +304,7 @@ sf::Vector2f projectVertices(sf::Vector2f axis, sf::VertexArray vertices, MathUt
     return sf::Vector2f(min, max);
 }
 
-
-bool checkSelectedTriangleCollision(std::vector<GameObject>& triangles, MathUtility& math, int& selectedTriangle)
+bool checkSelectedTriangleCollision(std::vector<GameObject>& triangles, MathUtility& math, int& selectedTriangle, bool beforeMove)
 {
     for (int i = 0; i < triangles.size(); i++) 
     {
@@ -337,7 +313,17 @@ bool checkSelectedTriangleCollision(std::vector<GameObject>& triangles, MathUtil
             continue;
         }
 
-        if (checkTwoTrianglesColliding(triangles[selectedTriangle].getShape(), triangles[i].getShape(), math))
+        if (beforeMove) 
+        {
+            if (checkTwoTrianglesColliding(triangles[selectedTriangle].getShape(), triangles[i].getShape(), math))
+            {
+                return true;
+            }
+            
+            return false;
+        }
+
+        if (checkTwoTrianglesColliding(triangles[selectedTriangle].getCollider().getColliderBounds(), triangles[i].getCollider().getColliderBounds(), math))
         {
             return true;
         }
@@ -366,7 +352,6 @@ bool checkTwoTrianglesColliding(sf::VertexArray& triangleA, sf::VertexArray& tri
         {
             return false;
         }
-
     }
 
     std::array<sf::Vector2f, 3> triangleB_edges =
@@ -387,11 +372,8 @@ bool checkTwoTrianglesColliding(sf::VertexArray& triangleA, sf::VertexArray& tri
         {
             return false;
         }
-
     }
-
     return true;
-
 }
 
 // Function to draw a vector as a line segment

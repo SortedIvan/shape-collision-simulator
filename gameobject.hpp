@@ -13,4 +13,7 @@ class GameObject
 		sf::VertexArray& getShape();
 		void draw(sf::RenderWindow& window);	
 		void setShape(sf::VertexArray _shape);
+		void moveGameObject(sf::Vector2f displacement);
+		void changeSizeCollider(float amount, bool inwards, sf::RenderWindow& window);
+		Collider& getCollider();
 };
